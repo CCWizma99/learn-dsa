@@ -99,3 +99,31 @@ export function InteractiveConcept({ title, description, children }) {
     </div>
   );
 }
+export function ComparisonTable({ headers, rows }) {
+  return (
+    <div className="my-6 overflow-hidden rounded-xl border border-border-color bg-bg-surface/30 backdrop-blur-sm shadow-sm">
+      <table className="w-full text-left border-collapse">
+        <thead className="bg-bg-elevated/50">
+          <tr>
+            {headers.map((h, i) => (
+              <th key={i} className="px-5 py-3 text-[11px] font-bold text-text-muted uppercase tracking-wider border-b border-border-color/50">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border-color/30">
+          {rows.map((row, i) => (
+            <tr key={i} className="hover:bg-bg-elevated/20 transition-colors">
+              {row.map((cell, j) => (
+                <td key={j} className="px-5 py-4 text-sm text-text-secondary leading-relaxed">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

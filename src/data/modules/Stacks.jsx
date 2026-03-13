@@ -1,91 +1,140 @@
-import { Section, P, BulletList, CodeBlock, Callout } from '../../components/modules/ModuleComponents';
+import { Section, P, BulletList, CodeBlock, Callout, InteractiveConcept } from '../../components/modules/ModuleComponents';
 import ModuleFooter from '../../components/modules/ModuleFooter';
+import StackViz from '../../components/visualizer/algorithms/StackViz';
+import LinkedListStackViz from '../../components/visualizer/algorithms/LinkedListStackViz';
+import TowerOfHanoiViz from '../../components/visualizer/algorithms/TowerOfHanoiViz';
 
 export default function StacksModule() {
   return (
     <>
       <Section id="what-are-stacks" title="What are Stacks?">
         <P>
-          A Stack is a linear data structure that follows a specific order for adding and removing elements: **LIFO (Last-In-First-Out)**.
+          A **Stack** is a linear data structure that follows a specific order for adding and removing elements: **LIFO (Last-In-First-Out)**.
         </P>
         <P>
-          Think of it literally like a stack of plates at a buffet. When the dishwasher adds a clean plate, they put it on the *top* of the stack. When a hungry customer takes a plate, they take it off the *top* of the stack. You never take a plate from the bottom (without breaking everything, at least).
+          Think of it like a stack of plates. When you add a clean plate, it goes on the **top**. When you take a plate, you take it from the **top**. The last plate placed on the stack is always the first one to be removed.
         </P>
         
-        <Callout type="info" title="Common Terminology">
-          Adding an item to the top of the stack is called a **Push**. Removing an item from the top is called a **Pop**. Looking at the top item without removing it is called a **Peek**.
+        <InteractiveConcept
+          title="Array-based Stack Simulation"
+          description="Push and Pop elements to see how the 'Top' pointer moves and how LIFO works in a fixed-size array implementation."
+        >
+          <StackViz />
+        </InteractiveConcept>
+
+        <Callout type="info" title="Core Operations">
+          <BulletList items={[
+            "**Push**: Adds an element to the top of the stack. O(1)",
+            "**Pop**: Removes the top element. O(1)",
+            "**Peek/Top**: Returns the top element without removing it. O(1)",
+            "**isEmpty**: Checks if the stack has no elements. O(1)"
+          ]} />
         </Callout>
       </Section>
 
-      <Section id="real-world" title="Real World Applications">
+      <Section id="implementations" title="Implementation Variants">
         <P>
-          Stacks are incredibly ubiquitous in computer software. You use them every single day:
+          A stack can be implemented using either a static **Array** or a dynamic **Linked List**. While both provide O(1) operations, they differ in memory management.
+        </P>
+
+        <div className="grid grid-cols-1 gap-8 my-8">
+          <div className="bg-bg-base/50 p-6 rounded-xl border border-border-color">
+            <h4 className="text-accent-primary font-bold mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-accent-primary" />
+              Linked List Implementation
+            </h4>
+            <P className="text-sm mb-4">
+              In a Linked List stack, each element is a node. New nodes are inserted at the head (Top), ensuring dynamic growth without a fixed MAX size.
+            </P>
+            <LinkedListStackViz />
+          </div>
+        </div>
+
+        <CodeBlock
+          title="C Implementation Comparison"
+          code={`// Array implementation uses an index 'top'
+void push_array(int val) {
+    stack[++top] = val;
+}
+
+// Linked List implementation inserts at the beginning
+void push_linked(int val) {
+    Node* new = malloc(sizeof(Node));
+    new->data = val;
+    new->next = top;
+    top = new;
+}`}
+        />
+      </Section>
+
+      <Section id="expressions" title="Expression Notations">
+        <P>
+          Stacks are the backbone of mathematical expression evaluation. Compilers translate standard human-readable expressions into formats that are easier for machines to process.
         </P>
         
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+          <div className="p-4 bg-bg-surface border border-border-color rounded-lg">
+            <span className="text-accent-primary font-bold block mb-1">Infix</span>
+            <code className="text-xs">A + B</code>
+            <P className="text-[10px] mt-2 text-text-muted">Operator is *between* operands. Standard human notation.</P>
+          </div>
+          <div className="p-4 bg-bg-surface border border-border-color rounded-lg">
+            <span className="text-accent-amber font-bold block mb-1">Postfix (RPN)</span>
+            <code className="text-xs">A B +</code>
+            <P className="text-[10px] mt-2 text-text-muted">Operator follows operands. Used by calculators and compilers.</P>
+          </div>
+          <div className="p-4 bg-bg-surface border border-border-color rounded-lg">
+            <span className="text-accent-indigo font-bold block mb-1">Prefix (Polish)</span>
+            <code className="text-xs">+ A B</code>
+            <P className="text-[10px] mt-2 text-text-muted">Operator precedes operands. Used in Lisp-like languages.</P>
+          </div>
+        </div>
+
+        <Callout type="warning" title="Why Postfix?">
+          Postfix expressions (Reverse Polish Notation) do not require parentheses to define order of operations. `(A+B)*C` in infix becomes `A B + C *` in postfix.
+        </Callout>
+      </Section>
+
+      <Section id="tower-of-hanoi" title="Tower of Hanoi">
+        <P>
+          The **Tower of Hanoi** is a classic mathematical puzzle that perfectly illustrates the power of **Recursion** and the Stack-like nature of recursive function calls.
+        </P>
+        <P className="text-sm italic text-text-muted mb-6">
+          Rules: Move all disks from source to destination. Only one disk can be moved at a time, and a larger disk can never be placed on top of a smaller one.
+        </P>
+
+        <TowerOfHanoiViz />
+
+        <CodeBlock
+          title="Recursive Tower of Hanoi (C)"
+          code={`void solveHanoi(int n, char src, char aux, char dest) {
+    if (n == 1) {
+        printf("Move disk 1 from %c to %c\\n", src, dest);
+        return;
+    }
+    // Move n-1 disks to auxiliary
+    solveHanoi(n - 1, src, dest, aux);
+    
+    // Move largest disk to destination
+    printf("Move disk %d from %c to %c\\n", n, src, dest);
+    
+    // Move n-1 disks from auxiliary to destination
+    solveHanoi(n - 1, aux, src, dest);
+}`}
+        />
+      </Section>
+
+      <Section id="applications" title="More Stack Applications">
         <BulletList
           items={[
-            "Undo/Redo Mechanisms: Every time you press Ctrl+Z, your word processor 'pops' your last action off the undo stack.",
-            "Browser History: When you hit the back button, the browser 'pops' your current URL off the history stack and opens the new top URL.",
-            "The Call Stack: This is how programming languages keep track of nested function calls. When a function finishes executing, it is popped off the Call Stack.",
+            "**Undo/Redo**: Recent actions are pushed onto a stack. Undo pops the last action.",
+            "**Balanced Parentheses**: Ensuring brackets match correctly in code (e.g., '{[()]}').",
+            "**Function Calls**: The CPU uses a 'Call Stack' to manage return addresses and local variables.",
+            "**Backtracking**: Solving puzzles like mazes where you need to 'go back' to the last decision point."
           ]}
         />
       </Section>
 
-      <Section id="implementation" title="Implementing a Stack">
-        <P>
-          Because a Stack is just an abstract concept (LIFO), you can build one using either an Array or a Linked List under the hood. In JavaScript, an Array is naturally a Stack thanks to its built-in methods!
-        </P>
-
-        <CodeBlock
-          title="C Array-based Stack"
-          code={`#include <stdio.h>
-#define MAX 100
-
-typedef struct {
-    int items[MAX];
-    int top;
-} Stack;
-
-void initStack(Stack* s) {
-    s->top = -1;
-}
-
-int isEmpty(Stack* s) {
-    return s->top == -1;
-}
-
-// Push: O(1)
-void push(Stack* s, int element) {
-    if (s->top >= MAX - 1) {
-        printf("Stack Overflow\\n");
-        return;
-    }
-    s->items[++(s->top)] = element;
-}
-
-// Pop: O(1)
-int pop(Stack* s) {
-    if (isEmpty(s)) {
-        printf("Stack Underflow\\n");
-        return -1; 
-    }
-    return s->items[(s->top)--];
-}
-
-// Peek: O(1)
-int peek(Stack* s) {
-    if (isEmpty(s)) {
-        printf("Stack is Empty\\n");
-        return -1;
-    }
-    return s->items[s->top];
-}`}
-        />
-
-        <Callout type="success" title="Performance">
-          A properly implemented Stack operates entirely in `O(1)` constant time for Push, Pop, and Peek. You never have to iterate through the stack to add or remove an element.
-        </Callout>
-      </Section>
       <ModuleFooter moduleId="stacks" />
     </>
   );

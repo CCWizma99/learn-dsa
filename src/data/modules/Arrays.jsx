@@ -1,5 +1,6 @@
-import { Section, P, BulletList, CodeBlock, Callout } from '../../components/modules/ModuleComponents';
+import { Section, P, BulletList, CodeBlock, Callout, InteractiveConcept } from '../../components/modules/ModuleComponents';
 import ModuleFooter from '../../components/modules/ModuleFooter';
+import BinarySearchViz from '../../components/visualizer/algorithms/BinarySearchViz';
 
 export default function ArraysModule() {
   return (
@@ -34,6 +35,29 @@ export default function ArraysModule() {
 
         <Callout type="success" title="The Golden Rule of Arrays">
           Arrays are fantastic when you need to frequently READ data at specific indices, or add data to the end. They are terrible if you need to frequently INSERT or DELETE data at the beginning or middle.
+        </Callout>
+      </Section>
+
+      <Section id="searching" title="Searching in Arrays">
+        <P>
+          Searching is the process of finding the position of a target element within an array. There are two primary ways to do this:
+        </P>
+        <BulletList
+          items={[
+            "Linear Search: Scanning every element one by one. O(n) time.",
+            "Binary Search: Only works on **sorted** arrays. Repeatedly divides the search interval in half. O(log n) time.",
+          ]}
+        />
+        
+        <InteractiveConcept
+          title="Binary Search Visualization"
+          description="Observe how Binary Search eliminates half of the remaining search space in every step. Note: The array MUST be sorted for this to work."
+        >
+          <BinarySearchViz />
+        </InteractiveConcept>
+
+        <Callout type="warning" title="Binary Search Requirement">
+          Always remember that Binary Search **requires** the data to be sorted. If the array is unsorted, you must either use Linear Search or sort the array first (which usually takes O(n log n) time).
         </Callout>
       </Section>
 

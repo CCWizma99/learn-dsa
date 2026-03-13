@@ -3,6 +3,8 @@ import ModuleFooter from '../../components/modules/ModuleFooter';
 import BubbleSortViz from '../../components/visualizer/algorithms/BubbleSortViz';
 import MergeSortViz from '../../components/visualizer/algorithms/MergeSortViz';
 import QuickSortViz from '../../components/visualizer/algorithms/QuickSortViz';
+import ShellSortViz from '../../components/visualizer/algorithms/ShellSortViz';
+import HeapSortViz from '../../components/visualizer/algorithms/HeapSortViz';
 
 export default function SortingModule() {
   return (
@@ -169,6 +171,45 @@ void quickSort(int arr[], int low, int high) {
         <div className="my-8">
           <QuickSortViz />
         </div>
+      </Section>
+      <Section id="shell-sort" title="Shell Sort">
+        <P>
+          Shell Sort is an optimization of Insertion Sort. It compares elements separated by a "gap" (e.g., n/2, n/4...) rather than just adjacent ones. This allows elements to "jump" across the array to their general area quickly.
+        </P>
+        <Callout type="info" title="The Gap Sequence">
+          As the algorithm runs, the gap size decreases until it reaches 1, at which point it becomes a final, very fast insertion sort on a nearly-sorted array.
+        </Callout>
+        <div className="my-8">
+           <ShellSortViz />
+        </div>
+      </Section>
+
+      <Section id="heap-sort" title="Heap Sort">
+        <P>
+          Heap Sort is an in-place comparison sort that uses a Binary Heap data structure. It first builds a Max Heap from the array, then repeatedly 'extracts' the largest element from the root and moves it to the end of the array.
+        </P>
+        <BulletList
+          items={[
+            "Time Complexity: O(n log n) - Guaranteed.",
+            "Space Complexity: O(1) - Unlike Merge Sort, it is in-place.",
+          ]}
+        />
+        <div className="my-8">
+           <HeapSortViz />
+        </div>
+      </Section>
+
+      <Section id="non-comparison-sorts" title="Non-Comparison Sorts">
+        <P>
+          Some algorithms don't compare elements at all! By counting occurrences or using "buckets" based on digits, they can achieve **O(n)** time on specific types of data.
+        </P>
+        <BulletList
+          items={[
+            "Radix Sort: Sorts by individual digits.",
+            "Counting Sort: Counts occurrences of each value.",
+            "Bucket Sort: Distributes elements into several 'buckets'.",
+          ]}
+        />
       </Section>
       <ModuleFooter moduleId="sorting" />
     </>

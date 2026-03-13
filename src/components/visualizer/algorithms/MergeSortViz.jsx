@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import VisualizerPanel, { useVisualizerTimer } from '../VisualizerPanel';
 
 const COLORS = {
@@ -6,8 +7,28 @@ const COLORS = {
   comparing: 'var(--accent-amber)',
   swapped: 'var(--accent-glow)',
   sorted: 'var(--accent-green)',
-  active: 'var(--accent-blue)', // Used for showing the active sub-array being merged
+  active: 'var(--accent-blue)',
 };
+
+const PSEUDO_CODE = [
+  'void mergeSort(int arr[], int l, int r) {',
+  '  if (l < r) {',
+  '    int m = l + (r - l) / 2;',
+  '    mergeSort(arr, l, m);',
+  '    mergeSort(arr, m + 1, r);',
+  '    merge(arr, l, m, r);',
+  '  }',
+  '}',
+  'void merge(int arr[], int l, int m, int r) {',
+  '  while (i < n1 && j < n2) {',
+  '    if (L[i] <= R[j]) {',
+  '       arr[k++] = L[i++];',
+  '    } else {',
+  '       arr[k++] = R[j++];',
+  '    }',
+  '  }',
+  '}'
+];
 
 export default function MergeSortViz() {
   const [input, setInput] = useState('38,27,43,3,9,82,10');
@@ -19,6 +40,7 @@ export default function MergeSortViz() {
   // Writing an iterative merge sort that pauses mid-merge is too complex for a simple state machine.
   const [animations, setAnimations] = useState([]);
   const [stepIdx, setStepIdx] = useState(0);
+  const [activeLine, setActiveLine] = useState(-1);
   
   const arrRef = useRef([...arr]);
   const stepIdxRef = useRef(0);
@@ -105,10 +127,11 @@ export default function MergeSortViz() {
     const newColors = [...colors]; 
 
     if (anim.type === 'compare') {
+      setActiveLine(10); // while(...)
       const [i, j] = anim.indices;
       newColors[i] = 'comparing';
       newColors[j] = 'comparing';
-      setStatus(`Comparing values at indices ${i} and ${j}`);
+      setStatus(`Comparing indices ${i} and ${j}`);
       setColors(newColors);
     } else if (anim.type === 'revert') {
       const [i, j] = anim.indices;
@@ -116,6 +139,7 @@ export default function MergeSortViz() {
       newColors[j] = 'default';
       setColors(newColors);
     } else if (anim.type === 'overwrite') {
+      setActiveLine(11); // arr[k] = ...
       const currentArrClone = [...currentArr];
       currentArrClone[anim.index] = anim.value;
       arrRef.current = currentArrClone;
@@ -124,12 +148,12 @@ export default function MergeSortViz() {
       newColors[anim.index] = 'swapped';
       setColors(newColors);
       
-      setStatus(`Overwriting index ${anim.index} with value ${anim.value}`);
+      setStatus(`Moving value ${anim.value} to sorted position ${anim.index}`);
     }
 
     stepIdxRef.current = idx + 1;
     setStepIdx(idx + 1);
-    return false; // Return false to indicate sorting is NOT complete
+    return false;
   }, [colors]);
 
   const { isPlaying, play, pause } = useVisualizerTimer(100, () => {
@@ -175,20 +199,30 @@ export default function MergeSortViz() {
       onReset={reset}
       isPlaying={isPlaying}
       status={status}
+      codeLines={PSEUDO_CODE}
+      activeLineIdx={activeLine}
     >
-      <div className="flex items-end gap-1 h-40 justify-center">
+      <div className="flex items-end gap-2 h-64 justify-center w-full max-w-4xl mx-auto px-4 overflow-hidden">
         {arr.map((val, idx) => (
-          <div key={idx} className="flex flex-col items-center gap-1 flex-1 max-w-[40px]">
-             <span className="text-[9px] font-code text-text-muted">{val}</span>
-            <div
-              className="w-full rounded-t transition-all duration-100" // Faster transition for merge sort because there are more ops
+          <motion.div 
+            key={`${idx}-${val}`}
+            layout
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="flex flex-col items-center gap-2 flex-1 max-w-[60px]"
+          >
+             <span className="text-[11px] font-bold font-code text-text-primary">{val}</span>
+            <motion.div
+              layout
+              className={`w-full rounded-t-lg transition-colors duration-200 shadow-lg ${
+                 colors[idx] === 'swapped' ? 'shadow-accent-glow/20' : 'shadow-accent-primary/10'
+              }`}
               style={{
-                height: `${(val / maxVal) * 120}px`,
+                height: `${(val / maxVal) * 200}px`,
                 backgroundColor: COLORS[colors[idx]] || COLORS.default,
-                minHeight: '8px',
+                minHeight: '12px',
               }}
             />
-          </div>
+          </motion.div>
         ))}
       </div>
     </VisualizerPanel>

@@ -23,6 +23,33 @@ export default function IntroductionModule() {
           A good analogy is a library. The books are your data. A **Data Structure** is how the library is built (e.g., shelves, indexing systems, alphabetical ordering). An **Algorithm** is the specific process you use to find a particular book (e.g., "go to the 'A' section, look at the third shelf, scan left to right").
         </P>
       </Section>
+      <Section id="algorithm-characteristics" title="Characteristics of a Good Algorithm">
+        <P>
+          Not every sequence of instructions is a "good" algorithm. In computer science, an algorithm must satisfy several strict criteria to be useful and reliable:
+        </P>
+        <BulletList
+          items={[
+            "Input: An algorithm must have zero or more well-defined inputs.",
+            "Output: It must produce at least one output (the solution to the problem).",
+            "Finiteness: It must terminate after a finite number of steps. An infinite loop is not an algorithm.",
+            "Definiteness: Every step must be clear and unambiguous. Each instruction should mean exactly one thing.",
+            "Effectiveness: Each step must be simple enough to be performed manually in a finite amount of time (it must be practical).",
+            "Independence: It should be a blueprint, not tied to any specific programming language. The logic should work in C, Python, or even on paper.",
+          ]}
+        />
+      </Section>
+
+      <Section id="data-structure-types" title="Classification of Data Structures">
+        <P>
+          Data structures are the physical containers for our data. They are broadly categorized into two types:
+        </P>
+        <BulletList
+          items={[
+            "Linear Data Structures: Elements are arranged in a sequential order where each element has a clear 'previous' and 'next' neighbor (e.g., Arrays, Stacks, Queues, Linked Lists).",
+            "Non-Linear Data Structures: Elements are organized in a hierarchical or interconnected web-like fashion (e.g., Trees, Graphs).",
+          ]}
+        />
+      </Section>
 
       <Section id="why-it-matters" title="Why Do We Care?">
         <P>

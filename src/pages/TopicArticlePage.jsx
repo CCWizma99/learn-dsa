@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
-import { AlignLeft, Play } from 'lucide-react';
 import { useModule, getModIdFromLegacyName } from '../hooks/useModules';
 
 const MODULE_COMPONENTS = {
@@ -13,17 +12,6 @@ const MODULE_COMPONENTS = {
   'trees': lazy(() => import('../data/modules/Trees')),
   'graphs': lazy(() => import('../data/modules/Graphs')),
   'sorting': lazy(() => import('../data/modules/Sorting')),
-};
-
-// Lazy load visualizers
-const VISUALIZER_MAP = {
-  'sorting': lazy(() => import('../components/visualizer/algorithms/BubbleSortViz')),
-  'arrays': lazy(() => import('../components/visualizer/algorithms/BinarySearchViz')),
-  'linked-lists': lazy(() => import('../components/visualizer/algorithms/LinkedListViz')),
-  'stacks': lazy(() => import('../components/visualizer/algorithms/StackViz')),
-  'queues': lazy(() => import('../components/visualizer/algorithms/QueueViz')),
-  'trees': lazy(() => import('../components/visualizer/algorithms/BSTViz')),
-  'graphs': lazy(() => import('../components/visualizer/algorithms/GraphBFSViz')),
 };
 
 export default function TopicArticlePage() {
@@ -41,7 +29,6 @@ export default function TopicArticlePage() {
   }
 
   const ContentComponent = MODULE_COMPONENTS[moduleId];
-  const VisualizerComponent = moduleMeta.hasVisualizer ? VISUALIZER_MAP[moduleId] : null;
 
   return (
     <div className="flex h-full bg-bg-base overflow-hidden relative">
@@ -60,29 +47,6 @@ export default function TopicArticlePage() {
               {moduleMeta.description}
             </p>
           </div>
-
-          {/* Interactive Visualizer Block (If applicable) */}
-          {VisualizerComponent && (
-            <div className="mb-16 border rounded-2xl bg-bg-surface border-border-color overflow-hidden shadow-lg" id="interactive-visualizer">
-              <div className="bg-bg-elevated px-4 py-2 border-b border-border-color flex items-center gap-2">
-                <Play size={14} className="text-accent-primary" />
-                <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
-                  Interactive Sandbox
-                </h3>
-              </div>
-              <div className="p-1">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-64 bg-bg-base">
-                      <div className="w-6 h-6 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  }
-                >
-                  <VisualizerComponent />
-                </Suspense>
-              </div>
-            </div>
-          )}
 
           {/* Render the static React component content */}
           <div className="space-y-16">

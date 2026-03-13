@@ -1,5 +1,6 @@
-import { Section, P, BulletList, CodeBlock, Callout } from '../../components/modules/ModuleComponents';
+import { Section, P, BulletList, CodeBlock, Callout, InteractiveConcept } from '../../components/modules/ModuleComponents';
 import ModuleFooter from '../../components/modules/ModuleFooter';
+import GraphBFSViz from '../../components/visualizer/algorithms/GraphBFSViz';
 
 export default function GraphsModule() {
   return (
@@ -12,6 +13,13 @@ export default function GraphsModule() {
           If trees are like family hierarchies, graphs are like social networks. In a tree, there is only one valid path from the root to any given node. In a graph, everything can be connected to everything else in massive intersecting webs.
         </P>
         
+        <InteractiveConcept
+          title="Graph BFS Simulation"
+          description="Breadth-First Search (BFS) explores the graph layer by layer, starting from the selected node and moving to all its neighbors before going deeper."
+        >
+          <GraphBFSViz />
+        </InteractiveConcept>
+
         <Callout type="info" title="Did You Know?">
           A Tree is actually just a very specific, restricted type of Graph! Specifically, it is an "undirected graph with no cycles". 
         </Callout>
@@ -88,6 +96,21 @@ void addEdge(struct Graph* graph, int src, int dest) {
     newNode->next = graph->array[dest].head;
     graph->array[dest].head = newNode;
 }`}
+        />
+        <Callout type="success" title="Representation Choice">
+          90% of graph problems use **Adjacency Lists** for efficiency. However, if your graph is very dense (edges connecting almost every pair), an **Adjacency Matrix** is faster.
+        </Callout>
+      </Section>
+
+      <Section id="incidence-matrix" title="Incidence Matrix">
+        <P>
+          While adjacency representations focus on **Vertex-to-Vertex** connections, an **Incidence Matrix** focus on **Vertex-to-Edge** relationships.
+        </P>
+        <BulletList
+          items={[
+            "Structure: A 2D array where rows are vertices and columns are edges.",
+            "Encoding: A cell is 1 if the vertex is an endpoint of the edge, 0 otherwise.",
+          ]}
         />
       </Section>
       <ModuleFooter moduleId="graphs" />

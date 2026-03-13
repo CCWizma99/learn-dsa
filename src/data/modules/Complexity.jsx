@@ -112,8 +112,16 @@ export default function ComplexityModule() {
 
       <Section id="big-o" title="Big-O Notation">
         <P>
-          To express these complexities universally, we use **Big-O notation**. Big-O describes the upper bound of the complexity—the worst-case scenario. It tells us the longest amount of time, or the most amount of space, an algorithm could possibly take.
+          In computer science, we use three primary asymptotic notations to describe the growth of an algorithm:
         </P>
+
+        <BulletList
+          items={[
+            "Big-O Notation (O): Represents the Upper Bound. It tells us the worst-case scenario (the maximum operations).",
+            "Big-Omega Notation (Ω): Represents the Lower Bound. It tells us the best-case scenario (the minimum operations).",
+            "Big-Theta Notation (Θ): Represents the Tight Bound. An algorithm is Θ(n) if it is both O(n) and Ω(n). This is the 'average' or 'exact' case.",
+          ]}
+        />
 
         <BigOGraph />
 
