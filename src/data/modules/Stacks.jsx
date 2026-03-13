@@ -23,7 +23,7 @@ export default function StacksModule() {
         </InteractiveConcept>
 
         <Callout type="info" title="Core Operations">
-          <BulletList items={[
+          <BulletList plain={true} items={[
             "**Push**: Adds an element to the top of the stack. O(1)",
             "**Pop**: Removes the top element. O(1)",
             "**Peek/Top**: Returns the top element without removing it. O(1)",
