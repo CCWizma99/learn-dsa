@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Section, P, Callout, BulletList } from '../../components/modules/ModuleComponents';
 import ModuleFooter from '../../components/modules/ModuleFooter';
 import { Upload, Trash2, FileText, AlertCircle, HardDrive, CheckCircle2 } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 
-const API_BASE = 'http://localhost:5001/api';
+const BUCKET_NAME = 'past-papers';
+const MAX_STORAGE_BYTES = 50 * 1024 * 1024; // 50MB
 
 export default function PastPapers() {
   const [papers, setPapers] = useState([]);
   const [totalSize, setTotalSize] = useState(0);
-  const [maxSize, setMaxSize] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -19,13 +20,33 @@ export default function PastPapers() {
 
   const fetchPapers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/papers`);
-      const data = await res.json();
-      setPapers(data.papers || []);
-      setTotalSize(data.totalSize || 0);
-      setMaxSize(data.maxSize || 0);
+      const { data, error } = await supabase.storage.from(BUCKET_NAME).list('', {
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
+
+      if (error) throw error;
+
+      let sizeAccumulator = 0;
+      const formattedPapers = data.map(file => {
+        const size = file.metadata?.size || 0;
+        sizeAccumulator += size;
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage.from(BUCKET_NAME).getPublicUrl(file.name);
+
+        return {
+          name: file.name,
+          size: size,
+          uploadedAt: file.created_at,
+          url: publicUrl
+        };
+      });
+
+      setPapers(formattedPapers);
+      setTotalSize(sizeAccumulator);
     } catch (err) {
-      setError('Failed to connect to the paper server');
+      console.error('Fetch error:', err);
+      setError('Failed to fetch papers from storage. Check if bucket exists and is public.');
     }
   };
 
@@ -33,28 +54,31 @@ export default function PastPapers() {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Local size check before upload
+    if (totalSize + file.size > MAX_STORAGE_BYTES) {
+      setError('Cannot upload: 50MB storage limit reached. Delete files first.');
+      return;
+    }
+
     setUploading(true);
     setError('');
     setMessage('');
 
-    const formData = new FormData();
-    formData.append('paper', file);
-
     try {
-      const res = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
+      // Use timestamp prefix to ensure unique filenames
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, file);
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Upload failed');
-      }
+      if (uploadError) throw uploadError;
 
       setMessage('Paper uploaded successfully!');
       fetchPapers();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Upload failed');
     } finally {
       setUploading(false);
       e.target.value = ''; // Reset input
@@ -63,12 +87,10 @@ export default function PastPapers() {
 
   const handleDelete = async (filename) => {
     try {
-      const res = await fetch(`${API_BASE}/papers/${filename}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        fetchPapers();
-      }
+      const { error } = await supabase.storage.from(BUCKET_NAME).remove([filename]);
+      if (error) throw error;
+      
+      fetchPapers();
     } catch (err) {
       setError('Failed to delete paper');
     }
@@ -82,7 +104,7 @@ export default function PastPapers() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const usagePercent = maxSize ? (totalSize / maxSize) * 100 : 0;
+  const usagePercent = MAX_STORAGE_BYTES ? (totalSize / MAX_STORAGE_BYTES) * 100 : 0;
 
   return (
     <>
@@ -140,7 +162,7 @@ export default function PastPapers() {
                 <span>Storage Status</span>
               </div>
               <span className="text-xs font-code text-text-muted">
-                {formatSize(totalSize)} / {formatSize(maxSize)}
+                {formatSize(totalSize)} / {formatSize(MAX_STORAGE_BYTES)}
               </span>
             </div>
             
@@ -160,7 +182,7 @@ export default function PastPapers() {
                 </Callout>
               ) : (
                 <P className="text-xs text-text-muted">
-                  You can still upload approximately **{formatSize(maxSize - totalSize)}** of content.
+                  You can still upload approximately **{formatSize(MAX_STORAGE_BYTES - totalSize)}** of content.
                 </P>
               )}
             </div>
