@@ -12,6 +12,7 @@ const MODULE_COMPONENTS = {
   'trees': lazy(() => import('../data/modules/Trees')),
   'graphs': lazy(() => import('../data/modules/Graphs')),
   'sorting': lazy(() => import('../data/modules/Sorting')),
+  'past-papers': lazy(() => import('../data/modules/PastPapers')),
 };
 
 export default function TopicArticlePage() {

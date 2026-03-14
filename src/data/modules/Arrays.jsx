@@ -26,10 +26,10 @@ export default function ArraysModule() {
         
         <BulletList
           items={[
-            "Access / Lookup: O(1) - Constant time. You can instantly jump to array[5000].",
-            "Append: O(1) - Adding to the end of a dynamic array is generally constant time (amortized).",
-            "Insertion: O(n) - Linear time. If you insert an element at the beginning, every other element must physically shift one spot to the right in memory.",
-            "Deletion: O(n) - Linear time. If you delete the first element, every other element must shift one spot to the left.",
+            "**Access / Lookup**: `O(1)` - Constant time. You can instantly jump to `array[5000]`.",
+            "**Append**: `O(1)` - Adding to the end of a dynamic array is generally constant time (amortized).",
+            "**Insertion**: `O(n)` - Linear time. If you insert an element at the beginning, every other element must physically shift one spot to the right in memory.",
+            "**Deletion**: `O(n)` - Linear time. If you delete the first element, every other element must shift one spot to the left.",
           ]}
         />
 
@@ -44,8 +44,8 @@ export default function ArraysModule() {
         </P>
         <BulletList
           items={[
-            "Linear Search: Scanning every element one by one. O(n) time.",
-            "Binary Search: Only works on **sorted** arrays. Repeatedly divides the search interval in half. O(log n) time.",
+            "**Linear Search**: Scanning every element one by one. `O(n)` time.",
+            "**Binary Search**: Only works on **sorted** arrays. Repeatedly divides the search interval in half. `O(log n)` time.",
           ]}
         />
         

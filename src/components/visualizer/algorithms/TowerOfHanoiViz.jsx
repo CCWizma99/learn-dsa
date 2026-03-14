@@ -32,41 +32,6 @@ export default function TowerOfHanoiViz() {
     done: false 
   });
 
-  const reset = useCallback(() => {
-    const disks = Array.from({ length: diskCount }, (_, i) => diskCount - i);
-    setPegs({ A: disks, B: [], C: [] });
-    setMoves([]);
-    setStatus('Reset.');
-    setActiveLine(-1);
-    setIsSolving(false);
-    stepRef.current = { moveIndex: 0, generatedMoves: [], done: false };
-    pause();
-  }, [diskCount]);
-
-  useEffect(() => {
-    reset();
-  }, [reset]);
-
-  const generateMoves = (n, src, aux, dest, moveList) => {
-    if (n === 1) {
-      moveList.push({ n, from: src, to: dest, line: 2 });
-      return;
-    }
-    generateMoves(n - 1, src, dest, aux, moveList);
-    moveList.push({ n, from: src, to: dest, line: 11 });
-    generateMoves(n - 1, aux, src, dest, moveList);
-  };
-
-  const startSolve = () => {
-    const moveList = [];
-    generateMoves(diskCount, 'A', 'B', 'C', moveList);
-    stepRef.current.generatedMoves = moveList;
-    stepRef.current.moveIndex = 0;
-    stepRef.current.done = false;
-    setIsSolving(true);
-    play();
-  };
-
   const doStep = useCallback(() => {
     const s = stepRef.current;
     if (s.done || s.moveIndex >= s.generatedMoves.length) {
@@ -92,6 +57,41 @@ export default function TowerOfHanoiViz() {
   }, [pegs]);
 
   const { isPlaying, play, pause } = useVisualizerTimer(1000, doStep);
+
+  const reset = useCallback(() => {
+    const disks = Array.from({ length: diskCount }, (_, i) => diskCount - i);
+    setPegs({ A: disks, B: [], C: [] });
+    setMoves([]);
+    setStatus('Reset.');
+    setActiveLine(-1);
+    setIsSolving(false);
+    stepRef.current = { moveIndex: 0, generatedMoves: [], done: false };
+    pause();
+  }, [diskCount, pause]);
+
+  useEffect(() => {
+    reset();
+  }, [reset]);
+
+  const generateMoves = (n, src, aux, dest, moveList) => {
+    if (n === 1) {
+      moveList.push({ n, from: src, to: dest, line: 2 });
+      return;
+    }
+    generateMoves(n - 1, src, dest, aux, moveList);
+    moveList.push({ n, from: src, to: dest, line: 11 });
+    generateMoves(n - 1, aux, src, dest, moveList);
+  };
+
+  const startSolve = () => {
+    const moveList = [];
+    generateMoves(diskCount, 'A', 'B', 'C', moveList);
+    stepRef.current.generatedMoves = moveList;
+    stepRef.current.moveIndex = 0;
+    stepRef.current.done = false;
+    setIsSolving(true);
+    play();
+  };
 
   return (
     <VisualizerPanel

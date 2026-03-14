@@ -14,9 +14,9 @@ export default function IntroductionModule() {
         </P>
         <BulletList
           items={[
-            "Data Structures are specialized formats for organizing, processing, retrieving, and storing data.",
-            "Algorithms are essentially a set of instructions or rules designed to solve a specific problem or perform a computation.",
-            "Nicklaus Wirth famously stated: Programs = Data Structures + Algorithms.",
+            "**Data Structures**: Specialized formats for organizing, processing, retrieving, and storing data.",
+            "**Algorithms**: A set of step-by-step instructions designed to solve a specific problem.",
+            "**The Golden Rule**: Programs = Data Structures + Algorithms (coined by Niklaus Wirth).",
           ]}
         />
         <P>
@@ -29,12 +29,12 @@ export default function IntroductionModule() {
         </P>
         <BulletList
           items={[
-            "Input: An algorithm must have zero or more well-defined inputs.",
-            "Output: It must produce at least one output (the solution to the problem).",
-            "Finiteness: It must terminate after a finite number of steps. An infinite loop is not an algorithm.",
-            "Definiteness: Every step must be clear and unambiguous. Each instruction should mean exactly one thing.",
-            "Effectiveness: Each step must be simple enough to be performed manually in a finite amount of time (it must be practical).",
-            "Independence: It should be a blueprint, not tied to any specific programming language. The logic should work in C, Python, or even on paper.",
+            "**Input**: An algorithm must have zero or more well-defined inputs.",
+            "**Output**: It must produce at least one output (the solution to the problem).",
+            "**Finiteness**: It must terminate after a finite number of steps. An infinite loop is not an algorithm.",
+            "**Definiteness**: Every step must be clear and unambiguous. Each instruction should mean exactly one thing.",
+            "**Effectiveness**: Each step must be simple enough to be performed manually in a finite amount of time (it must be practical).",
+            "**Independence**: It should be a blueprint, not tied to any specific programming language. The logic should work in `C`, `Python`, or even on paper.",
           ]}
         />
       </Section>
@@ -45,8 +45,8 @@ export default function IntroductionModule() {
         </P>
         <BulletList
           items={[
-            "Linear Data Structures: Elements are arranged in a sequential order where each element has a clear 'previous' and 'next' neighbor (e.g., Arrays, Stacks, Queues, Linked Lists).",
-            "Non-Linear Data Structures: Elements are organized in a hierarchical or interconnected web-like fashion (e.g., Trees, Graphs).",
+            "**Linear Data Structures**: Elements are arranged in a sequential order where each element has a clear 'previous' and 'next' neighbor (e.g., **Arrays**, **Stacks**, **Queues**, **Linked Lists**).",
+            "**Non-Linear Data Structures**: Elements are organized in a hierarchical or interconnected web-like fashion (e.g., **Trees**, **Graphs**).",
           ]}
         />
       </Section>
@@ -67,8 +67,8 @@ export default function IntroductionModule() {
         </P>
         <BulletList
           items={[
-            "How much memory will this operation use? (Space Complexity)",
-            "How long will this operation take as the input data grows to 10 million items? (Time Complexity)",
+            "How much memory will this operation use? (**Space Complexity**)",
+            "How long will this operation take as the input data grows to 10 million items? (**Time Complexity**)",
             "Does this data need to be accessed randomly, or sequentially?",
             "Are we doing more reads or more writes?",
           ]}
@@ -85,10 +85,10 @@ export default function IntroductionModule() {
 
         <BulletList
           items={[
-            "O(1) - Constant Time: The operation takes the same amount of time regardless of the data size (e.g., looking up an array element by index).",
-            "O(n) - Linear Time: The time taken grows linearly with the input size (e.g., looping through an array).",
-            "O(log n) - Logarithmic Time: The time grows logarithmically, usually because the algorithm repeatedly halves the searchable data (e.g., Binary Search).",
-            "O(n²) - Quadratic Time: The time grows exponentially, usually seen with nested loops (e.g., Bubble Sort). Generally frowned upon for large datasets.",
+            "**O(1)** - **Constant Time**: The operation takes the same amount of time regardless of the data size (e.g., looking up an array element by index).",
+            "**O(n)** - **Linear Time**: The time taken grows linearly with the input size (e.g., looping through an array).",
+            "**O(log n)** - **Logarithmic Time**: The time grows logarithmically, usually because the algorithm repeatedly halves the searchable data (e.g., Binary Search).",
+            "**O(n²)** - **Quadratic Time**: The time grows exponentially, usually seen with nested loops (e.g., Bubble Sort). Generally frowned upon for large datasets.",
           ]}
         />
       </Section>

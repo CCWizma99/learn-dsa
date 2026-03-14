@@ -63,6 +63,12 @@ export const MODULES = [
     description: 'Algorithms to arrange elements in a specific order',
     hasVisualizer: true,
   },
+  {
+    id: 'past-papers',
+    title: 'Past Papers',
+    icon: 'FileText',
+    description: 'Archive of previous exam papers and practice materials',
+  },
 ];
 
 export function useModules() {
@@ -84,6 +90,7 @@ export function getModIdFromLegacyName(name) {
     'Trees': 'trees',
     'Graphs': 'graphs',
     'Sorting': 'sorting',
+    'Past Papers': 'past-papers',
   };
   return map[name] || name.toLowerCase().replace(/\s+/g, '-');
 }

@@ -29,9 +29,9 @@ export default function SortingModule() {
 
         <BulletList
           items={[
-            "Time Complexity: O(n²) - Because of the nested loops, sorting 10,000 items requires upwards of 100,000,000 comparisons.",
-            "Space Complexity: O(1) - It sorts the array 'in-place'. It doesn't require allocating any extra memory.",
-            "Stability: Stable - If two items have the same value, they will retain their original relative order.",
+            "**Time Complexity - `O(n²)`**: Because of the nested loops, sorting 10,000 items requires upwards of 100,000,000 comparisons.",
+            "**Space Complexity - `O(1)`**: It sorts the array 'in-place'. It doesn't require allocating any extra memory.",
+            "**Stability - Stable**: If two items have the same value, they will retain their original relative order.",
           ]}
         />
       </Section>
@@ -76,9 +76,9 @@ export default function SortingModule() {
 
         <BulletList
           items={[
-            "Time Complexity: O(n log n) - It consistently divides the array in half (log n steps) and merges them (n operations per step).",
-            "Space Complexity: O(n) - Because we create new arrays during the split and merge process, it is not an 'in-place' sort.",
-            "Stability: Stable - As long as the merge step prefers elements from the left array when values are equal, their relative order is maintained.",
+            "**Time Complexity - `O(n log n)`**: It consistently divides the array in half (log n steps) and merges them (n operations per step).",
+            "**Space Complexity - `O(n)`**: Because we create new arrays during the split and merge process, it is not an 'in-place' sort.",
+            "**Stability - Stable**: As long as the merge step prefers elements from the left array when values are equal, their relative order is maintained.",
           ]}
         />
 
@@ -130,10 +130,10 @@ void mergeSort(int arr[], int l, int r) {
 
         <BulletList
           items={[
-            "Average Time Complexity: O(n log n) - Usually much faster than Merge Sort in practice.",
-            "Worst Case Time Complexity: O(n²) - Occurs if the worst possible pivot (e.g., the largest or smallest element) is consistently chosen.",
-            "Space Complexity: O(log n) - Due to the recursive call stack.",
-            "Stability: Not Stable.",
+            "**Average Time Complexity - `O(n log n)`**: Usually much faster than Merge Sort in practice.",
+            "**Worst Case Time Complexity - `O(n²)`**: Occurs if the worst possible pivot (e.g., the largest or smallest element) is consistently chosen.",
+            "**Space Complexity - `O(log n)`**: Due to the recursive call stack.",
+            "**Stability**: Not Stable.",
           ]}
         />
 
@@ -190,8 +190,8 @@ void quickSort(int arr[], int low, int high) {
         </P>
         <BulletList
           items={[
-            "Time Complexity: O(n log n) - Guaranteed.",
-            "Space Complexity: O(1) - Unlike Merge Sort, it is in-place.",
+            "**Time Complexity - `O(n log n)`**: Guaranteed.",
+            "**Space Complexity - `O(1)`**: Unlike Merge Sort, it is in-place.",
           ]}
         />
         <div className="my-8">
@@ -205,9 +205,9 @@ void quickSort(int arr[], int low, int high) {
         </P>
         <BulletList
           items={[
-            "Radix Sort: Sorts by individual digits.",
-            "Counting Sort: Counts occurrences of each value.",
-            "Bucket Sort: Distributes elements into several 'buckets'.",
+            "**Radix Sort**: Sorts by individual digits.",
+            "**Counting Sort**: Counts occurrences of each value.",
+            "**Bucket Sort**: Distributes elements into several 'buckets'.",
           ]}
         />
       </Section>

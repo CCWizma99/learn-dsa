@@ -134,6 +134,7 @@ export function useVisualizerTimer(speed = 500, callback) {
   const play = useCallback(
     (spd) => {
       setIsPlaying(true);
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         callbackRef.current();
       }, spd || speed);
