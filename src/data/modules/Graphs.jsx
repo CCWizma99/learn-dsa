@@ -1,118 +1,132 @@
 import { Section, P, BulletList, CodeBlock, Callout, InteractiveConcept } from '../../components/modules/ModuleComponents';
 import ModuleFooter from '../../components/modules/ModuleFooter';
 import GraphBFSViz from '../../components/visualizer/algorithms/GraphBFSViz';
+import GraphDFSViz from '../../components/visualizer/algorithms/GraphDFSViz';
+import GraphRepresentationViz from '../../components/visualizer/algorithms/GraphRepresentationViz';
 
 export default function GraphsModule() {
   return (
     <>
       <Section id="what-are-graphs" title="What are Graphs?">
         <P>
-          A Graph is a non-linear data structure consisting of **Vertices** (or nodes) and **Edges** (lines that connect the vertices). 
+          A **Graph** is a non-linear data structure used to model relationships and connections between entities. Mathematically, a graph $G$ is represented as $G = (V, E)$, where $V$ is a set of **vertices** (or nodes) representing the entities, and $E$ is a set of **edges** (or arcs) representing the connections between those vertices.
         </P>
         <P>
           If trees are like family hierarchies, graphs are like social networks. In a tree, there is only one valid path from the root to any given node. In a graph, everything can be connected to everything else in massive intersecting webs.
         </P>
         
-        <InteractiveConcept
-          title="Graph BFS Simulation"
-          description="Breadth-First Search (BFS) explores the graph layer by layer, starting from the selected node and moving to all its neighbors before going deeper."
-        >
-          <GraphBFSViz />
-        </InteractiveConcept>
-
-        <Callout type="info" title="Did You Know?">
-          A Tree is actually just a very specific, restricted type of Graph! Specifically, it is an "undirected graph with no cycles". 
+        <Callout type="info" title="Universal Concept">
+          A Tree is actually just a very specific, restricted type of Graph! Specifically, it is a **connected acyclic undirected graph**.
         </Callout>
       </Section>
 
-      <Section id="types-of-graphs" title="Types of Graphs">
+      <Section id="graph-terminology" title="1. Graph Terminology">
+        <P>To master graphs, you must understand the language used to describe their properties:</P>
+        <BulletList
+          items={[
+            "**Directed Graph (Digraph)**: Edges have a direction, represented as an ordered pair $(u, v)$. You can go from $u$ to $v$, but not vice versa unless another edge exists.",
+            "**Undirected Graph**: Connections are two-way, represented as an unordered set $\{u, v\}$.",
+            "**Weighted Graph (Network)**: Numerical values (weights/costs like distance or latency) are associated with each edge.",
+            "**Adjacent & Incident**: If an edge connects $v_0$ and $v_1$, they are *adjacent*. The edge is *incident* on both vertices.",
+            "**Degree**: The number of edges incident on a vertex. In Directed graphs, we track **In-degree** (incoming arrows) and **Out-degree** (outgoing arrows).",
+            "**Path**: A sequence of vertices connecting nodes. A *simple path* has all distinct vertices. *Path length* is the number of edges.",
+            "**Cycle**: A simple path with the same starting and ending vertex. Graphs without cycles are **acyclic**.",
+            "**Connected & Complete**: A graph is *connected* if every pair of vertices has a path. It is *complete* if every distinct vertex is directly connected to every other vertex."
+          ]}
+        />
+      </Section>
+
+      <Section id="memory-representations" title="2. Graph Representations in Memory">
         <P>
-          Graphs come in several variations depending on how the edges behave:
+          How we store a graph depends on memory efficiency and the operations we need to perform most often:
         </P>
         
         <BulletList
           items={[
-            "Undirected vs Directed: In an undirected graph, a connection goes both ways (like a Facebook friendship). In a directed graph, edges have arrows (like following someone on Twitter—they don't have to follow back).",
-            "Unweighted vs Weighted: In an unweighted graph, all connections are equal. In a weighted graph, some connections are \"more expensive\" or longer than others (like Google Maps calculating the absolute fastest route based on traffic).",
-            "Cyclic vs Acyclic: If you can start at node A, follow a path, and end up back at node A, the graph has a cycle.",
+            "**Adjacency Matrix**: A 2D array of size $V \\times V$. $A[i][j] = 1$ if an edge exists. High space complexity ($O(V^2)$) but constant-time ($O(1)$) edge lookup.",
+            "**Adjacency List**: An array of linked lists. Each array index represents a vertex, and its list contains all its neighbors. Highly memory efficient ($O(V+E)$) for sparse graphs.",
+            "**Incidence Matrix**: A $V \\times E$ matrix showing Vertex-to-Edge relationships. Useful in network flow and electrical circuit problems."
           ]}
         />
-      </Section>
 
-      <Section id="representation" title="How to Represent a Graph in Code">
-        <P>
-          Unlike a Tree where we can just use recursive `left` and `right` pointers, Graphs are typically represented in code in two ways: An **Adjacency Matrix** (a 2D grid) or an **Adjacency List** (a Map of arrays).
-        </P>
-        <P>
-          In 90% of practical software engineering scenarios, the Adjacency List is preferred because it uses significantly less memory for sparse graphs.
-        </P>
+        <InteractiveConcept
+          title="Memory Representation Viewer"
+          description="Observe how the same graph topology is translated into Matrix and List formats in memory."
+        >
+          <GraphRepresentationViz />
+        </InteractiveConcept>
 
-        <CodeBlock
-          title="C Adjacency List"
-          code={`#include <stdio.h>
-#include <stdlib.h>
-
-struct Node {
-    int dest;
-    struct Node* next;
-};
-
-struct AdjList {
-    struct Node *head; 
-};
-
-struct Graph {
-    int V; // Number of vertices
-    struct AdjList* array;
-};
-
-struct Node* createNode(int dest) {
-    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
-    newNode->dest = dest;
-    newNode->next = NULL;
-    return newNode;
-}
-
-struct Graph* createGraph(int V) {
-    struct Graph* graph = (struct Graph*)malloc(sizeof(struct Graph));
-    graph->V = V;
-    graph->array = (struct AdjList*)malloc(V * sizeof(struct AdjList));
-
-    for (int i = 0; i < V; ++i) {
-        graph->array[i].head = NULL;
-    }
-    return graph;
-}
-
-// Adding an undirected edge
-void addEdge(struct Graph* graph, int src, int dest) {
-    // Add edge from src to dest
-    struct Node* newNode = createNode(dest);
-    newNode->next = graph->array[src].head;
-    graph->array[src].head = newNode;
-
-    // Add edge from dest to src (undirected)
-    newNode = createNode(src);
-    newNode->next = graph->array[dest].head;
-    graph->array[dest].head = newNode;
-}`}
-        />
-        <Callout type="success" title="Representation Choice">
-          90% of graph problems use **Adjacency Lists** for efficiency. However, if your graph is very dense (edges connecting almost every pair), an **Adjacency Matrix** is faster.
+        <Callout type="success" title="The Golden Rule">
+          In 90% of practical software engineering scenarios, the **Adjacency List** is preferred for its memory efficiency on sparse real-world data.
         </Callout>
       </Section>
 
-      <Section id="incidence-matrix" title="Incidence Matrix">
+      <Section id="graph-traversals" title="3. Graph Traversal Operations">
         <P>
-          While adjacency representations focus on **Vertex-to-Vertex** connections, an **Incidence Matrix** focus on **Vertex-to-Edge** relationships.
+          Traversing a graph consists of systematically visiting its nodes. Unlike linear structures, we must categorize nodes as **Visited** or **Not Visited** to avoid infinite loops in cyclic graphs.
         </P>
+
+        <div className="grid grid-cols-1 gap-12 my-10">
+          <div>
+            <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center text-accent-primary text-xs">BFS</span>
+              Breadth-First Search
+            </h3>
+            <P className="text-sm">
+              Explores level-by-level (all neighbors first). Uses a **Queue** data structure.
+            </P>
+            <InteractiveConcept title="BFS Visualizer" description="Layer-by-layer exploration.">
+              <GraphBFSViz />
+            </InteractiveConcept>
+            <CodeBlock
+              title="BFS Pseudocode"
+              code={`BFS(v):
+  Initialize queue Q
+  Mark v as VISITED and push to Q
+  While Q is not empty:
+    w = pop front of Q
+    For each neighbor u of w:
+      If u is NOT VISITED:
+        Mark u as VISITED
+        Push u to Q`}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-accent-amber/20 flex items-center justify-center text-accent-amber text-xs">DFS</span>
+              Depth-First Search
+            </h3>
+            <P className="text-sm">
+              Explores as deep as possible before backtracking. Uses a **Stack** or **Recursion**.
+            </P>
+            <InteractiveConcept title="DFS Visualizer" description="Deepest path exploration.">
+              <GraphDFSViz />
+            </InteractiveConcept>
+            <CodeBlock
+              title="Recursive DFS Pseudocode"
+              code={`DFS(v):
+  Mark v as VISITED
+  For each neighbor u of v:
+    If u is NOT VISITED:
+      DFS(u)`}
+            />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="applications" title="4. Real-World Applications">
+        <P>Graphs are the foundation of many complex systems we use daily:</P>
         <BulletList
           items={[
-            "Structure: A 2D array where rows are vertices and columns are edges.",
-            "Encoding: A cell is 1 if the vertex is an endpoint of the edge, 0 otherwise.",
+            "**Computer Science**: Web indexing (Google), compiler dependency tracking, and garbage collection.",
+            "**Networking**: OSPF and BGP routing protocols use Dijkstra's algorithm to find the shortest physical paths between routers.",
+            "**Social Networks**: Facebook uses graphs to recommend friends (based on common neighbors) and LinkedIn uses them to calculate degrees of separation.",
+            "**Supply Chain**: Optimizing delivery routes and logistics using weighted graph algorithms."
           ]}
         />
       </Section>
+
       <ModuleFooter moduleId="graphs" />
     </>
   );

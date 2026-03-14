@@ -1,233 +1,245 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import VisualizerPanel, { useVisualizerTimer } from '../VisualizerPanel';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import SortWalkthroughPanel from './SortWalkthroughPanel';
+import { useVisualizerTimer } from '../VisualizerPanel';
 
-const COLORS = {
-  default: 'var(--accent-primary)',
-  comparing: 'var(--accent-amber)',
-  swapped: 'var(--accent-glow)',
-  sorted: 'var(--accent-green)',
-  pivot: 'var(--accent-red)',
-};
-
-const PSEUDO_CODE = [
-  'void quickSort(int arr[], int low, int high) {',
-  '  if (low < high) {',
-  '    int pi = partition(arr, low, high);',
-  '    quickSort(arr, low, pi - 1);',
-  '    quickSort(arr, pi + 1, high);',
-  '  }',
-  '}',
-  'int partition(int arr[], int low, int high) {',
-  '  int pivot = arr[high];',
-  '  for (int j = low; j < high; j++) {',
-  '    if (arr[j] < pivot) {',
-  '      i++; swap(&arr[i], &arr[j]);',
-  '    }',
-  '  }',
-  '  swap(&arr[i + 1], &arr[high]);',
-  '  return (i + 1);',
-  '}'
+const LEGEND = [
+  { color: 'var(--accent-red)', label: 'Pivot' },
+  { color: 'var(--accent-green)', label: '≤ Pivot (Left)' },
+  { color: 'var(--accent-amber)', label: '> Pivot (Right)' },
+  { color: 'var(--accent-primary)', label: 'Active Range' },
+  { color: 'var(--accent-glow)', label: 'Sorted' }
 ];
 
 export default function QuickSortViz() {
-  const [input, setInput] = useState('38,27,43,3,9,82,10');
-  const [arr, setArr] = useState([38, 27, 43, 3, 9, 82, 10]);
-  const [colors, setColors] = useState([]);
-  const [status, setStatus] = useState('Ready. Press Play to start.');
+  const [input] = useState('38,27,43,3,9,82,10');
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   
-  // Like Merge Sort, we pre-compute the Quick Sort steps so the player can step through them
-  const [animations, setAnimations] = useState([]);
-  const [stepIdx, setStepIdx] = useState(0);
-  const [activeLine, setActiveLine] = useState(-1);
-  
-  const arrRef = useRef([...arr]);
-  const stepIdxRef = useRef(0);
-  const animsRef = useRef([]);
-
-  // --- Quick Sort Algorithm to generate animation frames ---
-  const generateAnimations = (initialArray) => {
-    const anims = [];
-    const auxiliaryArray = [...initialArray];
-
-    const quickSortHelper = (main, low, high) => {
+  const steps = useMemo(() => {
+    const arr = input.split(',').map(Number).filter(n => !isNaN(n));
+    const result = [];
+    const n = arr.length;
+    const sortedIndices = new Set();
+    
+    const generate = (main, low, high, call) => {
       if (low < high) {
-        const pi = partition(main, low, high);
-        
-        quickSortHelper(main, low, pi - 1);
-        quickSortHelper(main, pi + 1, high);
+        // Step: Partition Call
+        result.push({
+          arr: [...main],
+          colors: main.map((_, idx) => idx >= low && idx <= high ? (sortedIndices.has(idx) ? 'sorted' : 'default') : (sortedIndices.has(idx) ? 'sorted' : 'dimmed')),
+          ptrs: { p: high, i: low - 1, j: low },
+          title: `Partitioning [${low}...${high}]`,
+          description: `Selecting arr[${high}] = ${main[high]} as pivot. i starts before boundaries. j will scan.`,
+          callStack: call,
+          status: `low=${low}, high=${high}, pivot=${main[high]}`,
+          pivotValue: main[high]
+        });
+
+        let pivot = main[high];
+        let i = low - 1;
+
+        for (let j = low; j < high; j++) {
+          const compColors = main.map((_, idx) => {
+             if (sortedIndices.has(idx)) return 'sorted';
+             if (idx < low || idx > high) return 'dimmed';
+             if (idx === high) return 'pivot';
+             if (idx <= i) return 'small';
+             if (idx > i && idx < j) return 'large';
+             if (idx === j) return 'comparing';
+             return 'default';
+          });
+
+          result.push({
+            arr: [...main],
+            colors: compColors,
+            ptrs: { p: high, i, j },
+            title: `j=${j}: arr[j]=${main[j]} vs Pivot=${pivot}`,
+            description: main[j] <= pivot 
+              ? `${main[j]} ≤ ${pivot}: Increment i and swap arr[i] with arr[j].` 
+              : `${main[j]} > ${pivot}: Leave in place, move j.`,
+            callStack: call,
+            status: `Scanning...`
+          });
+
+          if (main[j] <= pivot) {
+            i++;
+            [main[i], main[j]] = [main[j], main[i]];
+            
+            const swapColors = main.map((_, idx) => {
+                if (sortedIndices.has(idx)) return 'sorted';
+                if (idx < low || idx > high) return 'dimmed';
+                if (idx === high) return 'pivot';
+                if (idx === i || idx === j) return 'swapped';
+                if (idx < i) return 'small';
+                if (idx > i && idx < j) return 'large';
+                return 'default';
+             });
+
+            result.push({
+              arr: [...main],
+              colors: swapColors,
+              ptrs: { p: high, i, j },
+              title: `Swapped arr[${i}] and arr[${j}]`,
+              description: `Moved the smaller element ${main[i]} to the left part of our range.`,
+              callStack: call,
+              status: `j=${j}, i=${i}`
+            });
+          }
+        }
+
+        // Place pivot
+        [main[i + 1], main[high]] = [main[high], main[i + 1]];
+        const pi = i + 1;
+        sortedIndices.add(pi);
+
+        const placeColors = main.map((_, idx) => {
+            if (sortedIndices.has(idx)) return 'sorted';
+            if (idx < low || idx > high) return 'dimmed';
+            if (idx < pi) return 'small';
+            if (idx > pi) return 'large';
+            return 'default';
+        });
+
+        result.push({
+          arr: [...main],
+          colors: placeColors,
+          ptrs: { p: pi, i: -1, j: -1 },
+          title: `Pivot ${pivot} placed at index ${pi}`,
+          description: `All elements to the left are ≤ ${pivot}, and all to the right are > ${pivot}. Pivot is now fully sorted.`,
+          callStack: call,
+          status: `Partition point pi = ${pi}`
+        });
+
+        generate(main, low, pi - 1, `quickSort(${low}, ${pi-1})`);
+        generate(main, pi + 1, high, `quickSort(${pi+1}, ${high})`);
       } else if (low === high) {
-          anims.push({ type: 'sorted', index: low });
+        sortedIndices.add(low);
+        result.push({
+          arr: [...main],
+          colors: main.map((_, idx) => sortedIndices.has(idx) ? 'sorted' : 'dimmed'),
+          ptrs: { p: -1, i: -1, j: -1 },
+          title: `Base Case: Array of size 1`,
+          description: `Element ${main[low]} is sorted by definition.`,
+          callStack: call,
+          status: `Index ${low} finalized`
+        });
       }
     };
 
-    const partition = (main, low, high) => {
-      const pivot = main[high];
-      anims.push({ type: 'pivot', index: high, value: pivot });
-      
-      let i = low - 1;
-
-      for (let j = low; j <= high - 1; j++) {
-        anims.push({ type: 'compare', indices: [j, high] });
-        
-        if (main[j] < pivot) {
-          i++;
-          anims.push({ type: 'swap', indices: [i, j], values: [main[i], main[j]] });
-          // Perform swap in our recording array
-          let temp = main[i];
-          main[i] = main[j];
-          main[j] = temp;
-        } else {
-             anims.push({ type: 'no_swap', indices: [j, high] });
-        }
-      }
-      
-      anims.push({ type: 'swap', indices: [i + 1, high], values: [main[i + 1], main[high]] });
-      let temp = main[i + 1];
-      main[i + 1] = main[high];
-      main[high] = temp;
-      
-      anims.push({ type: 'sorted', index: i + 1});
-
-      return i + 1;
-    };
-
-    quickSortHelper(auxiliaryArray, 0, auxiliaryArray.length - 1);
-    return anims;
-  };
-
-  const doStep = useCallback(() => {
-    const idx = stepIdxRef.current;
-    const anims = animsRef.current;
-    const currentArr = arrRef.current;
+    generate([...arr], 0, n - 1, `quickSort(0, ${n-1})`);
     
-    if (idx >= anims.length) {
-      setColors(new Array(currentArr.length).fill('sorted'));
-      setStatus('Sorting complete!');
-      return true; // Return true to indicate sorting is complete
-    }
+    result.push({
+      arr: [...arr].sort((a,b) => a - b),
+      colors: new Array(n).fill('sorted'),
+      ptrs: { p: -1, i: -1, j: -1 },
+      title: "QuickSort Complete!",
+      description: "The recursive partitioning has fully ordered the array.",
+      status: "COMPLETED"
+    });
 
-    const anim = anims[idx];
-    const newColors = [...colors]; 
-    
-    for (let k = 0; k < newColors.length; k++) {
-        if (newColors[k] !== 'sorted' && newColors[k] !== 'pivot') {
-            newColors[k] = 'default';
-        }
-    }
+    return result;
+  }, [input]);
 
-    if (anim.type === 'pivot') {
-      setActiveLine(9); // pivot = arr[high]
-      newColors[anim.index] = 'pivot';
-      setStatus(`Selected pivot: ${anim.value} at index ${anim.index}`);
-      setColors(newColors);
-    } else if (anim.type === 'compare') {
-      setActiveLine(11); // if (arr[j] < pivot)
-      const [i, j] = anim.indices;
-      newColors[i] = 'comparing';
-      setStatus(`Comparing ${currentArr[i]} with pivot ${currentArr[j]}`);
-      setColors(newColors);
-    } else if (anim.type === 'no_swap') {
-         setStatus(`No swap needed.`);
-         setColors(newColors);
-    } else if (anim.type === 'swap') {
-      setActiveLine(12); // swap(...)
-      const [i, j] = anim.indices;
-      const currentArrClone = [...currentArr];
-      
-      let temp = currentArrClone[i];
-      currentArrClone[i] = currentArrClone[j];
-      currentArrClone[j] = temp;
-      
-      arrRef.current = currentArrClone;
-      setArr(currentArrClone);
-      
-      newColors[i] = 'swapped';
-      newColors[j] = 'swapped';
-      setColors(newColors);
-      
-      setStatus(`Swapped ${anim.values[0]} and ${anim.values[1]}`);
-    } else if (anim.type === 'sorted') {
-        newColors[anim.index] = 'sorted';
-        setActiveLine(15); // return pi
-        setStatus(`Index ${anim.index} sorted.`);
-        setColors(newColors);
-    }
+  const next = () => setCurrentStep(s => Math.min(steps.length - 1, s + 1));
+  const prev = () => setCurrentStep(s => Math.max(0, s - 1));
+  const reset = () => { setCurrentStep(0); setIsPlaying(false); };
 
-    stepIdxRef.current = idx + 1;
-    setStepIdx(idx + 1);
-    return false;
-  }, [colors]);
-
-  const { isPlaying, play, pause } = useVisualizerTimer(250, () => {
-      const isDone = doStep();
-      if (isDone) {
-          pause();
-      }
-  });
-
-  function reset() {
-    const nums = input.split(',').map(Number).filter((n) => !isNaN(n));
-    setArr([...nums]);
-    arrRef.current = [...nums];
-    setColors(new Array(nums.length).fill('default'));
-    
-    const anims = generateAnimations([...nums]);
-    setAnimations(anims);
-    animsRef.current = anims;
-    
-    setStepIdx(0);
-    stepIdxRef.current = 0;
-    
-    setStatus(`Array: [${nums.join(', ')}]. Ready.`);
-    
-    if (pause) {
+  const { play, pause } = useVisualizerTimer(1200, () => {
+    if (currentStep < steps.length - 1) {
+      next();
+    } else {
+      setIsPlaying(false);
       pause();
     }
-  }
+  });
 
-  useEffect(() => { reset(); }, []);
+  const togglePlay = () => {
+    if (isPlaying) {
+      pause();
+      setIsPlaying(false);
+    } else {
+      if (currentStep === steps.length - 1) setCurrentStep(0);
+      play();
+      setIsPlaying(true);
+    }
+  };
 
-  const maxVal = Math.max(...arr, 1);
+  const stepData = steps[currentStep];
 
   return (
-    <VisualizerPanel
+    <SortWalkthroughPanel
       title="Quick Sort"
-      inputLabel="Array"
-      inputValue={input}
-      onInputChange={(v) => { setInput(v); }}
-      onPlay={play}
-      onPause={pause}
-      onStep={doStep}
-      onReset={reset}
+      steps={steps}
+      currentStep={currentStep}
       isPlaying={isPlaying}
-      status={status}
-      codeLines={PSEUDO_CODE}
-      activeLineIdx={activeLine}
+      status={stepData.status}
+      legend={LEGEND}
+      onNext={next}
+      onPrev={prev}
+      onReset={reset}
+      onPlay={togglePlay}
+      onPause={togglePlay}
     >
-      <div className="flex items-end gap-2 h-64 justify-center w-full max-w-4xl mx-auto px-4 overflow-hidden">
-        {arr.map((val, idx) => (
-          <motion.div 
-            key={`${idx}-${val}`}
-            layout
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="flex flex-col items-center gap-2 flex-1 max-w-[60px]"
-          >
-             <span className="text-[11px] font-bold font-code text-text-primary">{val}</span>
+       <div className="flex flex-col items-center gap-10 w-full overflow-hidden">
+        <div className="flex gap-2 justify-center flex-wrap px-4">
+          {stepData.arr.map((val, idx) => (
             <motion.div
+              key={idx}
               layout
-              className={`w-full rounded-t-lg transition-colors duration-200 shadow-lg ${
-                colors[idx] === 'pivot' ? 'shadow-accent-red/20' : 'shadow-accent-primary/10'
+              className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-mono font-bold text-sm shadow-sm transition-all duration-300 relative ${
+                stepData.colors[idx] === 'pivot' ? 'bg-accent-red/20 border-accent-red text-accent-red scale-110 z-10' :
+                stepData.colors[idx] === 'small' ? 'bg-accent-green/20 border-accent-green text-accent-green' :
+                stepData.colors[idx] === 'large' ? 'bg-accent-amber/20 border-accent-amber text-accent-amber' :
+                stepData.colors[idx] === 'comparing' ? 'bg-accent-primary border-white text-white' :
+                stepData.colors[idx] === 'sorted' ? 'bg-accent-primary/20 border-accent-primary text-accent-primary grayscale-[0.5]' :
+                stepData.colors[idx] === 'swapped' ? 'bg-accent-glow/30 border-accent-glow text-accent-glow scale-105' :
+                stepData.colors[idx] === 'dimmed' ? 'opacity-20 blur-[0.5px]' :
+                'bg-bg-elevated border-border-color text-text-primary'
               }`}
-              style={{
-                height: `${(val / maxVal) * 200}px`,
-                backgroundColor: COLORS[colors[idx]] || COLORS.default,
-                minHeight: '12px',
-              }}
-            />
-          </motion.div>
-        ))}
+            >
+              {val}
+              
+              <AnimatePresence>
+                {stepData.ptrs.p === idx && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                    className="absolute -top-7 px-1.5 py-0.5 rounded bg-accent-red text-white text-[8px] font-bold uppercase tracking-tighter"
+                  >
+                    Pivot
+                  </motion.div>
+                )}
+                {stepData.ptrs.i === idx && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    className="absolute -bottom-6 text-accent-green font-bold text-[10px]"
+                  >
+                    ↑ i
+                  </motion.div>
+                )}
+                {stepData.ptrs.i === idx - 1 && idx === 0 && ( /* Special case for i=-1 indicator */
+                  <div className="absolute -left-4 -bottom-6 text-accent-green font-bold text-[10px]">
+                    i →
+                  </div>
+                )}
+                {stepData.ptrs.j === idx && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    className="absolute -bottom-8 text-accent-amber font-bold text-[10px]"
+                  >
+                    ↑ j
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 min-h-[20px]">
+          {stepData.arr.map((_, idx) => (
+              <div key={idx} className="w-12 flex justify-center">
+                 <span className="text-[10px] text-text-muted font-mono italic">[{idx}]</span>
+              </div>
+          ))}
+        </div>
       </div>
-    </VisualizerPanel>
+    </SortWalkthroughPanel>
   );
 }

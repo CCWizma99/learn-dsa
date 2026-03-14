@@ -5,12 +5,12 @@ import { useVisualizerTimer } from '../VisualizerPanel';
 
 const LEGEND = [
   { color: 'var(--accent-primary)', label: 'Unsorted' },
-  { color: 'var(--accent-amber)', label: 'Comparing' },
-  { color: 'var(--accent-glow)', label: 'Swapping' },
-  { color: 'var(--accent-green)', label: 'Sorted' }
+  { color: 'var(--accent-amber)', label: 'Key / Current' },
+  { color: 'var(--accent-glow)', label: 'Shifting' },
+  { color: 'var(--accent-green)', label: 'Sorted Sub-array' }
 ];
 
-export default function BubbleSortViz() {
+export default function InsertionSortViz() {
   const [input] = useState('38,27,43,3,9,82,10');
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -19,76 +19,80 @@ export default function BubbleSortViz() {
     const arr = input.split(',').map(Number).filter(n => !isNaN(n));
     const result = [];
     const n = arr.length;
-    let comparisons = 0;
     
     // Initial state
     result.push({
       arr: [...arr],
       colors: new Array(n).fill('default'),
-      ptrs: { i: -1, j: -1 },
+      ptrs: { i: -1, j: -1, keyIdx: -1 },
       title: "Initial Array",
-      description: `Welcome to Bubble Sort! We'll sort [${arr.join(', ')}] by repeatedly swapping adjacent elements that are in the wrong order.`,
-      status: "Ready to start Pass 1"
+      description: "Insertion Sort builds the final sorted array one item at a time. The first element is always consider 'sorted' as a sub-array of 1.",
+      status: "Ready to start"
     });
 
-    const bArr = [...arr];
-    for (let i = 0; i < n - 1; i++) {
-      for (let j = 0; j < n - i - 1; j++) {
-        comparisons++;
-        
-        // Step 1: Compare
-        const compareColors = new Array(n).fill('default');
-        for (let k = n - 1; k >= n - i; k--) compareColors[k] = 'sorted';
-        compareColors[j] = 'comparing';
-        compareColors[j + 1] = 'comparing';
-        
+    const iArr = [...arr];
+    for (let i = 1; i < n; i++) {
+      let key = iArr[i];
+      let j = i - 1;
+      
+      // Step 1: Pick Key
+      const pickColors = new Array(n).fill('default');
+      for (let k = 0; k < i; k++) pickColors[k] = 'sorted';
+      pickColors[i] = 'comparing';
+      
+      result.push({
+        arr: [...iArr],
+        colors: pickColors,
+        ptrs: { i, j, keyIdx: i },
+        title: `Pick Key: arr[${i}] = ${key}`,
+        description: `We take the element at index ${i} as our 'key'. We will look for its correct position in the sorted sub-array to its left.`,
+        status: `i = ${i}, key = ${key}`
+      });
+
+      while (j >= 0 && iArr[j] > key) {
+        // Step 2: Shift
+        const shiftColors = new Array(n).fill('default');
+        for (let k = 0; k < i + 1; k++) {
+            if (k < j) shiftColors[k] = 'sorted';
+            else if (k === j) shiftColors[k] = 'swapped';
+            else if (k > j && k <= i) shiftColors[k] = 'comparing';
+        }
+        shiftColors[j+1] = 'swapped'; // Target of shift
+
         result.push({
-          arr: [...bArr],
-          colors: compareColors,
-          ptrs: { i, j, j1: j+1 },
-          title: `Pass ${i + 1}: Compare ${bArr[j]} and ${bArr[j+1]}`,
-          description: `${bArr[j]} ${bArr[j] > bArr[j+1] ? '>' : '≤'} ${bArr[j+1]}. ${bArr[j] > bArr[j+1] ? "It's in the wrong order, so it will bubble up." : "It's in the correct order, no swap needed."}`,
-          status: `Pass ${i+1}, Comparison ${comparisons}`
+          arr: [...iArr],
+          colors: shiftColors,
+          ptrs: { i, j, keyIdx: -1 }, // key is "floating"
+          title: `Shift: ${iArr[j]} > ${key}`,
+          description: `Since ${iArr[j]} is larger than our key ${key}, we shift ${iArr[j]} one position to the right.`,
+          status: `Shifting index ${j} to ${j+1}`
         });
 
-        if (bArr[j] > bArr[j + 1]) {
-          // Step 2: Swap
-          [bArr[j], bArr[j + 1]] = [bArr[j + 1], bArr[j]];
-          const swapColors = new Array(n).fill('default');
-          for (let k = n - 1; k >= n - i; k--) swapColors[k] = 'sorted';
-          swapColors[j] = 'swapped';
-          swapColors[j + 1] = 'swapped';
-
-          result.push({
-            arr: [...bArr],
-            colors: swapColors,
-            ptrs: { i, j, j1: j+1 },
-            title: `Pass ${i + 1}: Swapping ${bArr[j+1]} ↔ ${bArr[j]}`,
-            description: `Swapped the elements. Notice how the larger value moves closer to its final position at the right.`,
-            status: `Performing Swap...`
-          });
-        }
+        iArr[j + 1] = iArr[j];
+        j = j - 1;
       }
-      // End of pass - mark sorted
-      const passEndColors = new Array(n).fill('default');
-      for (let k = n - 1; k >= n - i - 1; k--) passEndColors[k] = 'sorted';
+      
+      // Step 3: Insert
+      iArr[j + 1] = key;
+      const insertColors = new Array(n).fill('default');
+      for (let k = 0; k <= i; k++) insertColors[k] = 'sorted';
+      
       result.push({
-        arr: [...bArr],
-        colors: passEndColors,
-        ptrs: { i: i + 1, j: -1 },
-        title: `End of Pass ${i + 1}`,
-        description: `The largest unsorted element ${bArr[n - i - 1]} has finished "bubbling up" and is now in its correct position.`,
-        status: `Finalized index ${n-i-1}`
+        arr: [...iArr],
+        colors: insertColors,
+        ptrs: { i, j: j + 1, keyIdx: j + 1 },
+        title: `Insert: Key ${key} placed at index ${j + 1}`,
+        description: `We've found the correct spot! Either we hit the beginning of the array or found an element smaller than the key.`,
+        status: `Insertion complete at index ${j+1}`
       });
     }
 
-    // Final sorting state
     result.push({
-      arr: [...bArr],
+      arr: [...iArr],
       colors: new Array(n).fill('sorted'),
       ptrs: { i: -1, j: -1 },
-      title: "Array Fully Sorted!",
-      description: `Bubble Sort complete. The array is fully ordered. Total comparisons: ${comparisons}.`,
+      title: "Insertion Sort Complete!",
+      description: "Every element has been picked as a key and inserted into its proper relative position.",
       status: "COMPLETED"
     });
 
@@ -123,7 +127,7 @@ export default function BubbleSortViz() {
 
   return (
     <SortWalkthroughPanel
-      title="Bubble Sort"
+      title="Insertion Sort"
       steps={steps}
       currentStep={currentStep}
       isPlaying={isPlaying}
@@ -136,7 +140,6 @@ export default function BubbleSortViz() {
       onPause={togglePlay}
     >
        <div className="flex flex-col items-center gap-8 w-full">
-        {/* Array Row */}
         <div className="flex gap-2 justify-center flex-wrap">
           {stepData.arr.map((val, idx) => (
             <motion.div
@@ -151,26 +154,23 @@ export default function BubbleSortViz() {
             >
               {val}
               
-              {/* Pointers inside/under cell */}
               <AnimatePresence>
-                {stepData.ptrs.j === idx && (
+                {stepData.ptrs.keyIdx === idx && (
                   <motion.div 
-                    initial={{ opacity: 0, y: 10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute -top-6 text-[9px] font-bold text-accent-amber uppercase"
+                    initial={{ opacity: 0, scale: 0.5 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="absolute -top-7 text-[9px] font-bold text-accent-amber bg-accent-amber/10 border border-accent-amber/30 px-1 rounded uppercase"
                   >
-                    j
+                    Key
                   </motion.div>
                 )}
-                {stepData.ptrs.j1 === idx && (
+                {stepData.ptrs.j === idx && stepData.ptrs.keyIdx !== idx && (
                   <motion.div 
-                    initial={{ opacity: 0, y: 10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute -top-6 text-[9px] font-bold text-accent-amber uppercase"
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
+                    className="absolute -top-6 text-[9px] font-bold text-accent-glow uppercase"
                   >
-                    j+1
+                    j
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -178,7 +178,6 @@ export default function BubbleSortViz() {
           ))}
         </div>
         
-        {/* Pointer Labels Row */}
         <div className="flex gap-2 min-h-[20px]">
           {stepData.arr.map((_, idx) => (
               <div key={idx} className="w-12 flex justify-center">

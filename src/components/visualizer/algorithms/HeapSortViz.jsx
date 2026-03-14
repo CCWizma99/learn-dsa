@@ -1,181 +1,187 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import VisualizerPanel, { useVisualizerTimer } from '../VisualizerPanel';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import SortWalkthroughPanel from './SortWalkthroughPanel';
+import { useVisualizerTimer } from '../VisualizerPanel';
 
-const COLORS = {
-  default: 'var(--accent-primary)',
-  comparing: 'var(--accent-amber)',
-  swapped: 'var(--accent-glow)',
-  sorted: 'var(--accent-green)',
-  heap: 'var(--accent-blue)',
-};
-
-const PSEUDO_CODE = [
-  'void heapSort(int arr[], int n) {',
-  '  buildMaxHeap(arr, n);',
-  '  for (int i = n - 1; i > 0; i--) {',
-  '    swap(&arr[0], &arr[i]);',
-  '    heapify(arr, i, 0);',
-  '  }',
-  '}',
-  '// heapify() ensures max heap property...'
+const LEGEND = [
+  { color: 'var(--accent-amber)', label: 'Heap Root' },
+  { color: 'var(--accent-primary)', label: 'Active Heap' },
+  { color: 'var(--accent-glow)', label: 'Comparing / Swapping' },
+  { color: 'var(--accent-green)', label: 'Sorted' }
 ];
 
 export default function HeapSortViz() {
-  const [input, setInput] = useState('38,27,43,3,9,82,10');
-  const [arr, setArr] = useState([38, 27, 43, 3, 9, 82, 10]);
-  const [colors, setColors] = useState([]);
-  const [status, setStatus] = useState('Ready.');
-  const [activeLine, setActiveLine] = useState(-1);
+  const [input] = useState('38,27,43,3,9,82,10');
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   
-  // High-level steps for Heap Sort
-  const [animations, setAnimations] = useState([]);
-  const [stepIdx, setStepIdx] = useState(0);
-  const stepIdxRef = useRef(0);
-  const animsRef = useRef([]);
-  const arrRef = useRef([...arr]);
-
-  const generateAnimations = (a) => {
-    const anims = [];
-    const n = a.length;
+  const steps = useMemo(() => {
+    const arr = input.split(',').map(Number).filter(n => !isNaN(n));
+    const result = [];
+    const n = arr.length;
     
-    const swap = (i, j) => {
-      anims.push({ type: 'swap', indices: [i, j], values: [a[i], a[j]] });
-      [a[i], a[j]] = [a[j], a[i]];
-    };
+    result.push({
+      arr: [...arr],
+      colors: new Array(n).fill('default'),
+      ptrs: { },
+      title: "Initial Array",
+      description: "Heap Sort works by visualizing the array as a Complete Binary Tree. We first build a Max-Heap.",
+      status: "Ready"
+    });
 
-    const heapify = (size, i) => {
-      let largest = i;
-      let left = 2 * i + 1;
-      let right = 2 * i + 2;
-
-      if (left < size) {
-        anims.push({ type: 'compare', indices: [largest, left] });
-        if (a[left] > a[largest]) largest = left;
-      }
-      if (right < size) {
-        anims.push({ type: 'compare', indices: [largest, right] });
-        if (a[right] > a[largest]) largest = right;
-      }
-
-      if (largest !== i) {
-        swap(i, largest);
-        heapify(size, largest);
-      }
-    };
+    const hArr = [...arr];
 
     // Build max heap
-    for (let i = Math.floor(n / 2) - 1; i >= 0; i--) heapify(n, i);
-
-    // Extract elements
-    for (let i = n - 1; i > 0; i--) {
-      swap(0, i);
-      anims.push({ type: 'sorted', index: i });
-      heapify(i, 0);
+    for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+      heapify(hArr, n, i, result, "Building Max-Heap");
     }
-    anims.push({ type: 'sorted', index: 0 });
-    return anims;
+
+    // Extract elements one by one
+    for (let i = n - 1; i > 0; i--) {
+      result.push({
+        arr: [...hArr],
+        colors: hArr.map((_, idx) => idx === 0 ? 'swapped' : (idx === i ? 'swapped' : (idx < i ? 'default' : 'sorted'))),
+        ptrs: { root: 0, last: i },
+        title: `Extract Max: Swap ${hArr[0]} with ${hArr[i]}`,
+        description: `Moving the largest element ${hArr[0]} to the end of the array.`,
+        status: `Root to end`
+      });
+
+      [hArr[0], hArr[i]] = [hArr[i], hArr[0]];
+      
+      heapify(hArr, i, 0, result, "Re-heapifying");
+    }
+
+    function heapify(array, size, rootIdx, stepsArr, phase) {
+      let largest = rootIdx;
+      let l = 2 * rootIdx + 1;
+      let r = 2 * rootIdx + 2;
+
+      const baseColors = array.map((_, idx) => idx < size ? 'default' : 'sorted');
+      baseColors[rootIdx] = 'comparing';
+      if (l < size) baseColors[l] = 'comparing';
+      if (r < size) baseColors[r] = 'comparing';
+
+      stepsArr.push({
+        arr: [...array],
+        colors: baseColors,
+        ptrs: { root: rootIdx, l, r },
+        title: `${phase}: Heapifying index ${rootIdx}`,
+        description: `Comparing parent ${array[rootIdx]} with children ${l < size ? array[l] : 'N/A'} and ${r < size ? array[r] : 'N/A'}.`,
+        status: `Max-heap property check`
+      });
+
+      if (l < size && array[l] > array[largest]) largest = l;
+      if (r < size && array[r] > array[largest]) largest = r;
+
+      if (largest !== rootIdx) {
+        [array[rootIdx], array[largest]] = [array[largest], array[rootIdx]];
+        
+        const swapColors = array.map((_, idx) => idx < size ? 'default' : 'sorted');
+        swapColors[rootIdx] = 'swapped';
+        swapColors[largest] = 'swapped';
+
+        stepsArr.push({
+          arr: [...array],
+          colors: swapColors,
+          ptrs: { root: rootIdx, swapped: largest },
+          title: `Swap ${array[largest]} ↔ ${array[rootIdx]}`,
+          description: `Element ${array[largest]} was larger than its parent. Swapping to maintain Max-Heap property.`,
+          status: `Swapping values`
+        });
+
+        heapify(array, size, largest, stepsArr, phase);
+      }
+    }
+
+    result.push({
+      arr: [...hArr],
+      colors: new Array(n).fill('sorted'),
+      ptrs: { },
+      title: "Heap Sort Complete!",
+      description: "All elements have been extracted from the heap in descending order.",
+      status: "COMPLETED"
+    });
+
+    return result;
+  }, [input]);
+
+  const next = () => setCurrentStep(s => Math.min(steps.length - 1, s + 1));
+  const prev = () => setCurrentStep(s => Math.max(0, s - 1));
+  const reset = () => { setCurrentStep(0); setIsPlaying(false); };
+
+  const { play, pause } = useVisualizerTimer(1000, () => {
+    if (currentStep < steps.length - 1) {
+      next();
+    } else {
+      setIsPlaying(false);
+      pause();
+    }
+  });
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      pause();
+      setIsPlaying(false);
+    } else {
+      if (currentStep === steps.length - 1) setCurrentStep(0);
+      play();
+      setIsPlaying(true);
+    }
   };
 
-  function reset() {
-    const nums = input.split(',').map(Number).filter((n) => !isNaN(n));
-    setArr([...nums]);
-    arrRef.current = [...nums];
-    setColors(new Array(nums.length).fill('heap'));
-    
-    const anims = generateAnimations([...nums]);
-    animsRef.current = anims;
-    setStepIdx(0);
-    stepIdxRef.current = 0;
-    setActiveLine(-1);
-    setStatus(`Heap built. Ready to extract.`);
-    pause();
-  }
-
-  const doStep = useCallback(() => {
-    const idx = stepIdxRef.current;
-    const anims = animsRef.current;
-    const currentArr = arrRef.current;
-
-    if (idx >= anims.length) {
-      setColors(new Array(currentArr.length).fill('sorted'));
-      setStatus('Heap Sort complete!');
-      pause();
-      return;
-    }
-
-    const anim = anims[idx];
-    const newColors = [...colors];
-    // Reset transient colors
-    for (let k = 0; k < newColors.length; k++) {
-        if (newColors[k] === 'comparing' || newColors[k] === 'swapped') newColors[k] = 'heap';
-    }
-
-    if (anim.type === 'compare') {
-      setActiveLine(4); // heapify
-      newColors[anim.indices[0]] = 'comparing';
-      newColors[anim.indices[1]] = 'comparing';
-      setStatus(`Heapifying: comparing ${currentArr[anim.indices[0]]} and ${currentArr[anim.indices[1]]}`);
-    } else if (anim.type === 'swap') {
-      setActiveLine(3); // swap(0, i)
-      const [i, j] = anim.indices;
-      [currentArr[i], currentArr[j]] = [currentArr[j], currentArr[i]];
-      setArr([...currentArr]);
-      newColors[i] = 'swapped';
-      newColors[j] = 'swapped';
-      setStatus(`Swapped root with element at index ${j}`);
-    } else if (anim.type === 'sorted') {
-      newColors[anim.index] = 'sorted';
-      setStatus(`Index ${anim.index} is sorted.`);
-    }
-
-    setColors(newColors);
-    stepIdxRef.current = idx + 1;
-    setStepIdx(idx + 1);
-  }, [colors]);
-
-  const { isPlaying, play, pause } = useVisualizerTimer(500, doStep);
-  useEffect(() => { reset(); }, []);
-  const maxVal = Math.max(...arr, 1);
+  const stepData = steps[currentStep];
 
   return (
-    <VisualizerPanel
+    <SortWalkthroughPanel
       title="Heap Sort"
-      inputLabel="Array"
-      inputValue={input}
-      onInputChange={setInput}
-      onPlay={play}
-      onPause={pause}
-      onStep={doStep}
-      onReset={reset}
+      steps={steps}
+      currentStep={currentStep}
       isPlaying={isPlaying}
-      status={status}
-      codeLines={PSEUDO_CODE}
-      activeLineIdx={activeLine}
+      status={stepData.status}
+      legend={LEGEND}
+      onNext={next}
+      onPrev={prev}
+      onReset={reset}
+      onPlay={togglePlay}
+      onPause={togglePlay}
     >
-      <div className="flex items-end gap-2 h-64 justify-center w-full max-w-4xl mx-auto px-4 overflow-hidden">
-        {arr.map((val, idx) => (
-          <motion.div 
-            key={`${idx}-${val}`}
-            layout
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="flex flex-col items-center gap-2 flex-1 max-w-[60px]"
-          >
-             <span className="text-[11px] font-bold font-code text-text-primary">{val}</span>
+       <div className="flex flex-col items-center gap-10 w-full overflow-hidden">
+        <div className="flex gap-2 justify-center flex-wrap px-4">
+          {stepData.arr.map((val, idx) => (
             <motion.div
+              key={idx}
               layout
-              className={`w-full rounded-t-lg transition-colors duration-200 shadow-lg ${
-                colors[idx] === 'heap' ? 'shadow-accent-blue/20' : 'shadow-accent-primary/10'
+              className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-mono font-bold text-sm shadow-sm transition-all duration-300 relative ${
+                stepData.colors[idx] === 'comparing' ? 'bg-accent-glow/20 border-accent-glow text-accent-glow' :
+                stepData.colors[idx] === 'swapped' ? 'bg-accent-glow/40 border-accent-glow text-accent-glow scale-105' :
+                stepData.colors[idx] === 'sorted' ? 'bg-accent-green/20 border-accent-green text-accent-green' :
+                'bg-bg-elevated border-border-color text-text-primary'
               }`}
-              style={{
-                height: `${(val / maxVal) * 200}px`,
-                backgroundColor: COLORS[colors[idx]] || COLORS.default,
-                minHeight: '12px',
-              }}
-            />
-          </motion.div>
-        ))}
+            >
+              {val}
+              
+              <AnimatePresence>
+                {stepData.ptrs.root === idx && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                    className="absolute -top-7 text-accent-amber font-bold text-[8px] uppercase tracking-tighter"
+                  >
+                    Root
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 min-h-[20px]">
+          {stepData.arr.map((_, idx) => (
+              <div key={idx} className="w-12 flex justify-center">
+                 <span className="text-[10px] text-text-muted font-mono italic">[{idx}]</span>
+              </div>
+          ))}
+        </div>
       </div>
-    </VisualizerPanel>
+    </SortWalkthroughPanel>
   );
 }

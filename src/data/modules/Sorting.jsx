@@ -1,6 +1,7 @@
 import { Section, P, BulletList, CodeBlock, Callout } from '../../components/modules/ModuleComponents';
 import ModuleFooter from '../../components/modules/ModuleFooter';
 import BubbleSortViz from '../../components/visualizer/algorithms/BubbleSortViz';
+import InsertionSortViz from '../../components/visualizer/algorithms/InsertionSortViz';
 import MergeSortViz from '../../components/visualizer/algorithms/MergeSortViz';
 import QuickSortViz from '../../components/visualizer/algorithms/QuickSortViz';
 import ShellSortViz from '../../components/visualizer/algorithms/ShellSortViz';
@@ -16,6 +17,44 @@ export default function SortingModule() {
         <P>
           There are dozens of sorting algorithms, each with its own niche best use-case. We broadly categorize them into iterative `O(n²)` algorithms (like Bubble Sort) and recursive `O(n log n)` algorithms (like Merge Sort).
         </P>
+
+        <div className="my-10 overflow-x-auto rounded-2xl border border-border-color/40 bg-bg-elevated/20">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-bg-base/40 border-b border-border-color/40">
+                <th className="p-4 text-xs font-bold text-accent-primary uppercase tracking-widest">Algorithm</th>
+                <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Best Case</th>
+                <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Average</th>
+                <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Worst Case</th>
+                <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Space</th>
+                <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Stable</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { name: 'Bubble Sort', best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)', stable: 'Yes' },
+                { name: 'Insertion Sort', best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)', stable: 'Yes' },
+                { name: 'Merge Sort', best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)', stable: 'Yes' },
+                { name: 'Quick Sort', best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)', space: 'O(log n)', stable: 'No' },
+                { name: 'Heap Sort', best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(1)', stable: 'No' },
+                { name: 'Shell Sort', best: 'O(n log n)', avg: 'O(n^1.25)', worst: 'O(n²)', space: 'O(1)', stable: 'No' },
+              ].map((algo, i) => (
+                <tr key={i} className="border-b border-border-color/20 hover:bg-bg-base/20 transition-colors">
+                  <td className="p-4 text-sm font-bold text-text-primary">{algo.name}</td>
+                  <td className="p-4 text-sm font-mono text-center text-text-muted">{algo.best}</td>
+                  <td className="p-4 text-sm font-mono text-center text-accent-amber">{algo.avg}</td>
+                  <td className="p-4 text-sm font-mono text-center text-accent-red">{algo.worst}</td>
+                  <td className="p-4 text-sm font-mono text-center text-text-muted">{algo.space}</td>
+                  <td className="p-4 text-sm text-center">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${algo.stable === 'Yes' ? 'bg-accent-green/10 text-accent-green' : 'bg-text-muted/10 text-text-muted'}`}>
+                      {algo.stable}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Section>
 
       <Section id="bubble-sort" title="Bubble Sort">
@@ -62,6 +101,49 @@ export default function SortingModule() {
 
         <div className="my-8">
           <BubbleSortViz />
+        </div>
+      </Section>
+
+      <Section id="insertion-sort" title="Insertion Sort">
+        <P>
+          Insertion Sort builds the final sorted array one item at a time. It is much like the way you might sort playing cards in your hands: you pick one card and "insert" it into its correct position relative to the cards you are already holding.
+        </P>
+        
+        <Callout type="info" title="Best for Small Data">
+          While inefficient for large lists, Insertion Sort is extremely fast for very small datasets or lists that are already "mostly sorted". 
+        </Callout>
+
+        <BulletList
+          items={[
+            "**Time Complexity - `O(n²)`**: In the worst case (reverse sorted list), it must compare every element with every other element.",
+            "**Best Case - `O(n)`**: In a list that is already sorted, it only makes one comparison per element.",
+            "**Space Complexity - `O(1)`**: In-place sorting.",
+            "**Stability - Stable**: Maintains the relative order of equal elements.",
+          ]}
+        />
+
+        <CodeBlock
+          title="C Insertion Sort"
+          code={`void insertionSort(int arr[], int n) {
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+
+        /* Move elements of arr[0..i-1] that are 
+           greater than key, to one position ahead 
+           of their current position */
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}`}
+        />
+
+        <div className="my-8">
+          <InsertionSortViz />
         </div>
       </Section>
 
